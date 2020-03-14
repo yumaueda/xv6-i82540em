@@ -91,6 +91,9 @@ void            end_op();
 extern int      ismp;
 void            mpinit(void);
 
+// pci.c
+void            pciinit(void);
+
 // picirq.c
 void            picenable(int);
 void            picinit(void);
