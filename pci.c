@@ -8,10 +8,23 @@
 static void check_bus(struct pci_bus *bus);
 
 
+static struct pci_driver pci_devices[] = {
+    { VENDOR_ID_INTEL, DEVICE_ID_82540EM, &i82540em_init},
+    { 0, 0, 0 },
+};
+
+
 static void set_conf_addr(struct pci_func *func, uint32_t offset)
 {
     uint32_t conf_addr_val = ENABLE_BIT | (uint32_t)func->bus->bus_num << 16 | (uint32_t)func->dev_num << 11 | (uint32_t)func->func_num << 8 | offset;
     outl(PCI_CONF_ADDR_IOPORT, conf_addr_val);
+}
+
+
+static void write_conf_data(struct pci_func *func, uint32_t offset, uint32_t v)
+{
+    set_conf_addr(func, offset);
+    outl(PCI_CONF_DATA_IOPORT, v);
 }
 
 
@@ -22,12 +35,59 @@ static uint32_t read_conf_data(struct pci_func *func, uint32_t offset)
 }
 
 
+void func_enable(struct pci_func *func)
+{
+    write_conf_data(func, COMMAND, COMMAND_IO_ENABLE | COMMAND_MEM_ENABLE | COMMAND_MASTER_ENABLE);
+
+    uint32_t barwidth = 4;
+    uint32_t bar, oldv, v, base, size;
+    uint32_t regnum;
+
+    for (bar = BAR_START; bar < BAR_END; bar += barwidth) {
+        barwidth = 4;
+        oldv = read_conf_data(func, bar);
+        write_conf_data(func, bar, 0xFFFFFFFF);
+
+        if ((v = read_conf_data(func, bar)) == 0)
+            continue;
+
+        regnum = GET_BAR_REG_NUM(bar);
+        if (GET_BAR_TYPE(v) == BAR_TYPE_MEM) {
+            if (GET_BAR_MEM_TYPE(v) == BAR_MEM_TYPE_64)
+                barwidth += 4;
+
+            base = GET_BAR_MEM_ADDR(oldv);
+            size = GET_BAR_MEM_SIZE(v);
+            cprintf("mem: bar %d: %d bytes at 0x%x\n", regnum, size, base);
+        }
+        else {
+            base = GET_BAR_IO_ADDR(oldv);
+            size = GET_BAR_IO_SIZE(v);
+            cprintf("io: bar %d: %d bytes at 0x%x\n", regnum, size, base);
+        }
+
+        func->reg_base[regnum] = base;
+        func->reg_size[regnum] = size;
+
+        // we have to restore the original value
+        write_conf_data(func, bar, oldv);
+    }
+}
+
+
 static void attach_matched_device(struct pci_func *func)
 {
     uint32_t vdid = read_conf_data(func, VENDOR_ID);
     uint32_t vendor_id = GET_VENDOR_ID(vdid);
     uint32_t device_id = GET_DEVICE_ID(vdid);
+
     cprintf("vendor id: %x device id: %x\n", vendor_id, device_id);
+
+    for (uint i = 0; pci_devices[i].attach_func; i++) {
+        if (pci_devices[i].key1 == vendor_id && pci_devices[i].key2 == device_id) {
+            pci_devices[i].attach_func(func);
+        }
+    }
 }
 
 
@@ -39,7 +99,6 @@ static void attach_bridge(struct pci_func *func)
     sssp = read_conf_data(func, PRIM_BUS_NUM);
     nbus.bus_num = GET_SEC_BUS_NUM(sssp);
     check_bus(&nbus);
-    cprintf("attach_bridge called\n");
 }
 
 

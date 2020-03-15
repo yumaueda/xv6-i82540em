@@ -2,6 +2,7 @@ struct buf;
 struct context;
 struct file;
 struct inode;
+struct pci_func;
 struct pipe;
 struct proc;
 struct rtcdate;
@@ -53,6 +54,9 @@ int             readi(struct inode*, char*, uint, uint);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, uint, uint);
 
+// i82540em.c
+int             i82540em_init(struct pci_func *func);
+
 // ide.c
 void            ideinit(void);
 void            ideintr(void);
@@ -93,6 +97,7 @@ void            mpinit(void);
 
 // pci.c
 void            pciinit(void);
+void            func_enable(struct pci_func *func);
 
 // picirq.c
 void            picenable(int);
