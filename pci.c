@@ -22,12 +22,41 @@ static uint32_t read_conf_data(struct pci_func *func, uint32_t offset)
 }
 
 
+static void attach_matched_device(struct pci_func *func)
+{
+    uint32_t vdid = read_conf_data(func, VENDOR_ID);
+    uint32_t vendor_id = GET_VENDOR_ID(vdid);
+    uint32_t device_id = GET_DEVICE_ID(vdid);
+    cprintf("vendor id: %x device id: %x\n", vendor_id, device_id);
+}
+
+
+static void attach_bridge(struct pci_func *func)
+{
+    struct pci_bus nbus;
+    uint32_t sssp;
+    memset(&nbus, 0, sizeof(nbus));
+    sssp = read_conf_data(func, PRIM_BUS_NUM);
+    nbus.bus_num = GET_SEC_BUS_NUM(sssp);
+    check_bus(&nbus);
+    cprintf("attach_bridge called\n");
+}
+
+
 static void attach(struct pci_func *func)
 {
-    // uint32_t vdid = read_conf_data(func, VENDOR_ID);
-    // uint32_t cspr = read_conf_data(func, REV_ID);
+    uint32_t cspr = read_conf_data(func, REV_ID);
+    uint32_t subclass = GET_SUBCLASS(cspr);
+    uint32_t class_code = GET_CLASS_CODE(cspr);
 
-    cprintf("[PCI] found a device at %d:%d:%d\n", (int)func->bus->bus_num, (int)func->dev_num, (int)func->func_num);
+    cprintf("PCI: %x:%x:%x class: %x subclass: %x\n", (int)func->bus->bus_num, (int)func->dev_num, (int)func->func_num, (int)class_code, (int)subclass);
+
+    if (subclass==SUBCLASS_PCI2PCI_BRIDGE && class_code==CLASS_CODE_BRIDGE) {
+        attach_bridge(func);
+    }
+    else {
+        attach_matched_device(func);
+    }
 }
 
 
@@ -39,17 +68,28 @@ static void check_bus(struct pci_bus *bus)
 
     uint32_t bhlc;
     uint32_t vdid;
+    uint32_t header;
+    uint32_t vendor_id;
 
     for (func.dev_num = 0; func.dev_num < DEV_NUM_MAX; func.dev_num++) {
+        func.func_num = 0;
         bhlc = read_conf_data(&func, CACHE_LINE_SIZE);
         vdid = read_conf_data(&func, VENDOR_ID);
+        header = GET_HEADERTYPE_TYPE(bhlc);
+        vendor_id = GET_VENDOR_ID(vdid);
 
-        if (GET_HEADERTYPE_TYPE(bhlc) > (uint32_t)1)
+        if (header > 0x1)
             continue; // CardBus Bridge is not supported
-        if (GET_VENDOR_ID(vdid) == 0xFFFF)
+
+        if (vendor_id == 0xFFFF)
             continue; // Device doesn't exist
 
         for (func.func_num = 0; func.func_num < (IS_MULTIFUNC(bhlc) ? FUNC_NUM_MAX : 1); func.func_num++) {
+            vdid = read_conf_data(&func, VENDOR_ID);
+            vendor_id = GET_VENDOR_ID(vdid);
+            if (vendor_id == 0xFFFF)
+                continue;
+
             attach(&func);
         }
     }
