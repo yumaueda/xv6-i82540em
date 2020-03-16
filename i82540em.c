@@ -22,7 +22,24 @@ static void write_reg(struct i82540em *nic, uint16_t offset, uint32_t v)
 
 
 static void tx_init(struct i82540em *nic) {
-
+    // allocate region of memory for TX ring
+    for (int i = 0; i < TX_RING_SIZE; i++) {
+        memset(&nic->tx_ring[i], 0, sizeof(struct tx_descriptor));
+    }
+    uint64_t base = (uint64_t)V2P(nic->tx_ring);
+    // set TDBAL/TDBAH
+    write_reg(nic, TDBAL_8254X, (uint32_t)(base & 0xFFFFFFFF));
+    write_reg(nic, TDBAH_8254X, (uint32_t)(base >> 32));
+    // set TDLEN
+    write_reg(nic, TDLEN_8254X, (uint32_t)(sizeof(struct tx_descriptor) * TX_RING_SIZE));
+    // set TX head and tail
+    write_reg(nic, TDH_8254X, 0);
+    write_reg(nic, TDT_8254X, TX_RING_SIZE-1);
+    // set TX control regsiter
+    write_reg(nic, TCTL_8254X,
+        TCTL_EN |
+        TCTL_PSP
+    );
 }
 
 static void rx_init(struct i82540em *nic) {
@@ -112,9 +129,8 @@ int i82540em_init(struct pci_func *func)
     ioapicenable(nic_i82540em->irq_line, ncpu - 1); // register i/o apic
     write_reg(nic_i82540em, CTRL_8254X, read_reg(nic_i82540em, CTRL_8254X) | CTRL_SLU); // link up
 
-    // RX init
+    // RX/TX init
     rx_init(nic_i82540em);
-    // TX init
     tx_init(nic_i82540em);
 
     return 0;

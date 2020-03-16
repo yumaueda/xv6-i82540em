@@ -17,6 +17,11 @@
 #define RDLEN_8254X     0x2808
 #define RDH_8254X       0x2810
 #define RDT_8254X       0x2818
+#define TDBAL_8254X     0x3800
+#define TDBAH_8254X     0x3804
+#define TDLEN_8254X     0x3808
+#define TDH_8254X       0x3810
+#define TDT_8254X       0x3818
 #define MTA_8254X       0x5200
 
 //------
@@ -41,15 +46,21 @@
 //------
 // RCTL
 //------
-#define RCTL_EN         0x1
-#define RCTL_SBP        0x2
-#define RCTL_UPE        0x4
-#define RCTL_MPE        0x8
-#define RCTL_LPE        0x10
+#define RCTL_EN         0x2
+#define RCTL_SBP        0x4
+#define RCTL_UPE        0x8
+#define RCTL_MPE        0x10
+#define RCTL_LPE        0x20
 #define RCTL_RDMTS_HALF 0x0
 #define RCTL_BAM        0x8000
 #define RCTL_BSIZE_2048 0x0
 #define RCTL_SECRC      0x4000000
+
+//------
+// TCTL
+//------
+#define TCTL_EN         0x2
+#define TCTL_PSP        0x8
 
 //-----
 // MTA
