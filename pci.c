@@ -129,6 +129,7 @@ static void check_bus(struct pci_bus *bus)
     uint32_t vdid;
     uint32_t header;
     uint32_t vendor_id;
+    uint32_t mmii;
 
     for (func.dev_num = 0; func.dev_num < DEV_NUM_MAX; func.dev_num++) {
         func.func_num = 0;
@@ -146,6 +147,8 @@ static void check_bus(struct pci_bus *bus)
         for (func.func_num = 0; func.func_num < (IS_MULTIFUNC(bhlc) ? FUNC_NUM_MAX : 1); func.func_num++) {
             vdid = read_conf_data(&func, VENDOR_ID);
             vendor_id = GET_VENDOR_ID(vdid);
+            mmii = read_conf_data(&func, INTERRUPT_LINE);
+            func.irq_line = GET_INTERRUPT_LINE(mmii);
             if (vendor_id == 0xFFFF)
                 continue;
 

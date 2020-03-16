@@ -3,6 +3,10 @@
 #include "x86.h"
 #include "i82540em.h"
 #include "pci.h"
+#include "param.h"
+#include "memlayout.h"
+#include "mmu.h"
+#include "proc.h"
 
 
 static uint32_t read_reg(struct i82540em *nic, uint16_t offset)
@@ -14,6 +18,47 @@ static uint32_t read_reg(struct i82540em *nic, uint16_t offset)
 static void write_reg(struct i82540em *nic, uint16_t offset, uint32_t v)
 {
     *(volatile uint32_t *)(nic->mmio_base_addr + offset) = v;
+}
+
+
+static void tx_init(struct i82540em *nic) {
+
+}
+
+static void rx_init(struct i82540em *nic) {
+    for (int i = 0; i < MTA_MAX; i++) // clear MTA
+        write_reg(nic, MTA_8254X, 0);
+
+    write_reg(nic, IMS_8254X, IMS_RXT0);
+    read_reg(nic, ICR_8254X); // clear interrupts
+
+    // allocate region of memory for RX ring
+    for (int i = 0; i < RX_RING_SIZE; i++) {
+        memset(&nic->rx_ring[i], 0, sizeof(struct rx_descriptor));
+        nic->rx_ring[i].buffer_addr = (uint64_t)V2P(kalloc());
+    }
+
+    // set RDBAL/RDBAH
+    uint64_t base = (uint64_t)V2P(nic->rx_ring);
+    write_reg(nic, RDBAL_8254X, (uint32_t)(base & 0xFFFFFFFF));
+    write_reg(nic, RDBAH_8254X, (uint32_t)(base >> 32));
+    // set RDLEN
+    write_reg(nic, RDLEN_8254X, (uint32_t)(sizeof(struct rx_descriptor) * RX_RING_SIZE));
+    // set RX head and tail
+    write_reg(nic, RDH_8254X, 0);
+    write_reg(nic, RDT_8254X, RX_RING_SIZE-1);
+    // set RX control register
+    write_reg(nic, RCTL_8254X,
+        RCTL_EN         |
+        RCTL_SBP        |
+        RCTL_UPE        |
+        RCTL_MPE        |
+        RCTL_LPE        |
+        RCTL_RDMTS_HALF |
+        RCTL_BAM        |
+        RCTL_BSIZE_2048 |
+        RCTL_SECRC
+    );
 }
 
 
@@ -52,13 +97,25 @@ static void get_mmio_base_addr(struct pci_func *func, struct i82540em *nic)
 int i82540em_init(struct pci_func *func)
 {
     func_enable(func);
+
     struct i82540em *nic_i82540em = (struct i82540em *)kalloc();
+    nic_i82540em->irq_line = func->irq_line;
+
     // get MMIO base address
     get_mmio_base_addr(func, nic_i82540em);
     cprintf("82540em: MMIO base addr: 0x%x\n", nic_i82540em->mmio_base_addr);
+
     // read MAC address from EEPROM
     read_addr(nic_i82540em);
     cprintf("82540em: MAC addr: %x:%x:%x:%x:%x:%x\n", nic_i82540em->addr[0], nic_i82540em->addr[1], nic_i82540em->addr[2], nic_i82540em->addr[3], nic_i82540em->addr[4], nic_i82540em->addr[5]);
+
+    ioapicenable(nic_i82540em->irq_line, ncpu - 1); // register i/o apic
+    write_reg(nic_i82540em, CTRL_8254X, read_reg(nic_i82540em, CTRL_8254X) | CTRL_SLU); // link up
+
+    // RX init
+    rx_init(nic_i82540em);
+    // TX init
+    tx_init(nic_i82540em);
 
     return 0;
 }

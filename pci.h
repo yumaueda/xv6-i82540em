@@ -8,8 +8,8 @@
 //-----------------
 // I/O port number
 //-----------------
-#define PCI_CONF_ADDR_IOPORT      0xcf8
-#define PCI_CONF_DATA_IOPORT      0xcfc
+#define PCI_CONF_ADDR_IOPORT      0xCF8
+#define PCI_CONF_DATA_IOPORT      0xCFC
 
 //----------------
 // CONFIG_ADDRESS
@@ -17,7 +17,7 @@
 #define BUS_NUM_MAX               0x100
 #define DEV_NUM_MAX               0x20
 #define FUNC_NUM_MAX              0x8
-#define ENABLE_BIT_SHIFT          0x1f
+#define ENABLE_BIT_SHIFT          0x1F
 #define ENABLE_BIT                (1 << ENABLE_BIT_SHIFT)
 
 //-----------------
@@ -26,10 +26,11 @@
 #define VENDOR_ID                 0x0
 #define COMMAND                   0x4
 #define REV_ID                    0x8
-#define CACHE_LINE_SIZE           0xc
+#define CACHE_LINE_SIZE           0xC
 #define BAR_START                 0x10
 #define PRIM_BUS_NUM              0x18
 #define BAR_END                   0x28
+#define INTERRUPT_LINE            0x3C
 
 //-----------
 // Vendor ID
@@ -117,6 +118,12 @@
 #define SEC_BUS_NUM_SHIFT         0x8
 #define GET_SEC_BUS_NUM(sssp)     (((sssp) >> SEC_BUS_NUM_SHIFT) & SEC_BUS_NUM_MASK)
 
+//----------------
+// Interrupt line
+//----------------
+#define INTERRUPT_LINE_MASK       0xFF
+#define GET_INTERRUPT_LINE(mmii)  ((mmii) & INTERRUPT_LINE_MASK)
+
 
 struct pci_func {
     struct pci_bus *bus;
@@ -124,7 +131,7 @@ struct pci_func {
     uint32_t func_num;
     uint32_t reg_base[BAR_NUM_MAX];
     uint32_t reg_size[BAR_NUM_MAX];
-    uint8_t irq_num;
+    uint32_t irq_line;
 };
 
 struct pci_bus {
