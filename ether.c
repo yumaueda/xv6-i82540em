@@ -5,7 +5,7 @@
 #include "i82540em.h"
 
 
-size_t gen_frame(struct ether_hdr *ehdr, void *p_packet, size_t packet_size)
+uint32_t gen_frame(struct ether_hdr *ehdr, void *p_packet, uint32_t packet_size)
 {
     if (packet_size > ETHER_DATA_MAX_LEN || !p_packet)
         return 0;
@@ -22,9 +22,9 @@ size_t gen_frame(struct ether_hdr *ehdr, void *p_packet, size_t packet_size)
 
     if (packet_size < ETHER_DATA_MIN_LEN) {
         memset(data+packet_size, 0, ETHER_DATA_MIN_LEN-packet_size); // needs padding!
-        return (size_t)ETHER_FRAME_MIN_LEN;
+        return (uint32_t)ETHER_FRAME_MIN_LEN;
     }
     else {
-        return (size_t)(ETHER_HDR_LEN + packet_size);
+        return (uint32_t)(ETHER_HDR_LEN + packet_size);
     }
 }

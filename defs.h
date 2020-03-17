@@ -26,7 +26,7 @@ void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
 
 // ether.c
-size_t          gen_frame(struct ether_hdr *ehdr, void *p_packet, size_t packet_size);
+uint32_t          gen_frame(struct ether_hdr *ehdr, void *p_packet, uint32_t packet_size);
 
 // exec.c
 int             exec(char*, char**);

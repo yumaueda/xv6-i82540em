@@ -7,6 +7,4 @@ typedef uint               uint32_t;
 typedef ushort             uint16_t;
 typedef uchar              uint8_t;
 
-typedef uint32_t           size_t;
-
 typedef uint               pde_t;

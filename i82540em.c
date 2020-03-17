@@ -32,7 +32,7 @@ void i82540em_soft_irq(void)
 }
 
 
-static uint32_t tx(struct net *inet, void *p_packet, size_t packet_size)
+static uint32_t tx(struct net *inet, void *p_packet, uint32_t packet_size)
 {
     struct i82540em *nic = (struct i82540em *)inet->nic;
     uint32_t tail = read_reg(nic, TDT_8254X);
@@ -196,7 +196,7 @@ int i82540em_init(struct pci_func *func)
     void *hwframe = kalloc();
     char *hw = "\x48\x65\x6C\x6C\x6F\x2C\x20\x57\x6F\x72\x6C\x64\x21";
     memmove(hwframe, (void *)hw, 13);
-    size_t f_size = gen_frame(&hdr, hwframe, 13);
+    uint32_t f_size = gen_frame(&hdr, hwframe, 13);
     tx(n_inet, hwframe, f_size);
     return 0;
 }
