@@ -1,7 +1,9 @@
 struct buf;
 struct context;
+struct ether_hdr;
 struct file;
 struct inode;
+struct net;
 struct pci_func;
 struct pipe;
 struct proc;
@@ -22,6 +24,9 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
+
+// ether.c
+size_t          gen_frame(struct ether_hdr *ehdr, void *p_packet, size_t packet_size);
 
 // exec.c
 int             exec(char*, char**);
@@ -56,6 +61,7 @@ int             writei(struct inode*, char*, uint, uint);
 
 // i82540em.c
 int             i82540em_init(struct pci_func *func);
+void            i82540em_soft_irq(void);
 
 // ide.c
 void            ideinit(void);
@@ -94,6 +100,10 @@ void            end_op();
 // mp.c
 extern int      ismp;
 void            mpinit(void);
+
+// net.c
+struct net*     get_inet(void);
+void            register_inet(struct net *inet);
 
 // pci.c
 void            pciinit(void);

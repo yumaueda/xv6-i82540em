@@ -1,6 +1,7 @@
 OBJS = \
 	bio.o\
 	console.o\
+	ether.o\
 	exec.o\
 	file.o\
 	fs.o\
@@ -13,6 +14,7 @@ OBJS = \
 	log.o\
 	main.o\
 	mp.o\
+	net.o\
 	pci.o\
 	picirq.o\
 	pipe.o\

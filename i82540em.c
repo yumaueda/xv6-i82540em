@@ -1,12 +1,17 @@
 #include "types.h"
 #include "defs.h"
+#include "ether.h"
 #include "x86.h"
 #include "i82540em.h"
+#include "net.h"
 #include "pci.h"
 #include "param.h"
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+
+
+static struct i82540em *p_nic_i82540em;
 
 
 static uint32_t read_reg(struct i82540em *nic, uint16_t offset)
@@ -21,7 +26,41 @@ static void write_reg(struct i82540em *nic, uint16_t offset, uint32_t v)
 }
 
 
-static void tx_init(struct i82540em *nic) {
+void i82540em_soft_irq(void)
+{
+    cprintf("i82540em: interrupt\n");
+}
+
+
+static uint32_t tx(struct net *inet, void *p_packet, size_t packet_size)
+{
+    struct i82540em *nic = (struct i82540em *)inet->nic;
+    uint32_t tail = read_reg(nic, TDT_8254X);
+    struct tx_descriptor *td = &nic->tx_ring[tail];
+
+    // send a packet
+    td->buffer_addr = (uint64_t)V2P(p_packet);
+    td->length = packet_size;
+    td->status = 0;
+    td->cmd = (
+        TDESC_EOP |
+        TDESC_RS  |
+        0
+    );
+
+    // make tail points one beyond the last valid descriptor
+    write_reg(nic, TDT_8254X, (tail + 1) % TX_RING_SIZE);
+
+    // poll the status field
+    while (!(td->status & 0xF))
+        microdelay(1);
+
+    return packet_size;
+}
+
+
+static void tx_init(struct i82540em *nic)
+{
     // allocate region of memory for TX ring
     for (int i = 0; i < TX_RING_SIZE; i++) {
         memset(&nic->tx_ring[i], 0, sizeof(struct tx_descriptor));
@@ -37,10 +76,12 @@ static void tx_init(struct i82540em *nic) {
     write_reg(nic, TDT_8254X, TX_RING_SIZE-1);
     // set TX control regsiter
     write_reg(nic, TCTL_8254X,
-        TCTL_EN |
-        TCTL_PSP
+        TCTL_EN  |
+        TCTL_PSP |
+        0
     );
 }
+
 
 static void rx_init(struct i82540em *nic) {
     for (int i = 0; i < MTA_MAX; i++) // clear MTA
@@ -74,7 +115,8 @@ static void rx_init(struct i82540em *nic) {
         RCTL_RDMTS_HALF |
         RCTL_BAM        |
         RCTL_BSIZE_2048 |
-        RCTL_SECRC
+        RCTL_SECRC      |
+        0
     );
 }
 
@@ -133,5 +175,28 @@ int i82540em_init(struct pci_func *func)
     rx_init(nic_i82540em);
     tx_init(nic_i82540em);
 
+    struct net *inet = (struct net *)kalloc();
+    memset(inet, 0, sizeof(struct net));
+    inet->nic = nic_i82540em;
+    memmove(inet->addr, nic_i82540em->addr, ETHER_ADDR_LEN);
+    inet->send = tx;
+
+    nic_i82540em->inet = inet;
+    p_nic_i82540em = nic_i82540em;
+
+    register_inet(inet);
+
+    struct net *n_inet = get_inet();
+    struct ether_hdr hdr;
+
+    uint8_t dst[ETHER_ADDR_LEN] = ETHER_ADDR_BROADCAST;
+    memmove(hdr.src, n_inet->addr, ETHER_ADDR_LEN);
+    memmove(hdr.dst, dst, ETHER_ADDR_LEN);
+    hdr.type = ETHER_TYPE_EXPERIMENTAL;
+    void *hwframe = kalloc();
+    char *hw = "\x48\x65\x6C\x6C\x6F\x2C\x20\x57\x6F\x72\x6C\x64\x21";
+    memmove(hwframe, (void *)hw, 13);
+    size_t f_size = gen_frame(&hdr, hwframe, 13);
+    tx(n_inet, hwframe, f_size);
     return 0;
 }

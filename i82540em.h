@@ -71,6 +71,12 @@
 #define TX_RING_SIZE    0x10
 #define RX_BUFF_SIZE    0x800
 
+//-------
+// TDESC
+//-------
+#define TDESC_EOP       0x1
+#define TDESC_RS        0x8
+
 
 struct rx_descriptor{
     uint64_t buffer_addr;
@@ -99,6 +105,7 @@ struct i82540em {
     uint8_t addr[6];
     struct rx_descriptor rx_ring[RX_RING_SIZE] __attribute__((aligned(16)));;
     struct tx_descriptor tx_ring[TX_RING_SIZE] __attribute__((aligned(16)));;
+    struct net *inet;
 };
 
 
