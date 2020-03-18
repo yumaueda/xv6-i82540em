@@ -22,6 +22,7 @@ SECTIONS
 	}
 
 	/* Include debugging information in kernel memory */
+    . = ALIGN(0x1000);
 	.stab : {
 		PROVIDE(__STAB_BEGIN__ = .);
 		*(.stab);
