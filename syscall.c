@@ -25,6 +25,18 @@ fetchint(uint addr, int *ip)
   return 0;
 }
 
+// Fetch the uint at addr from the current process.
+int fetchuint(uint addr, uint *uip)
+{
+  struct proc *curproc = myproc();
+
+  if (addr >= curproc->sz || addr + 4 > curproc->sz)
+    return -1;
+  *uip = *(uint *)(addr);
+  return 0;
+}
+
+
 // Fetch the nul-terminated string at addr from the current process.
 // Doesn't actually copy the string - just sets *pp to point at it.
 // Returns length of string, not including nul.
@@ -50,6 +62,11 @@ int
 argint(int n, int *ip)
 {
   return fetchint((myproc()->tf->esp) + 4 + 4*n, ip);
+}
+
+int arguint(int n, uint *uip)
+{
+  return fetchuint((myproc()->tf->esp) + 4 + 4*n, uip);
 }
 
 // Fetch the nth word-sized system call argument as a pointer
@@ -103,6 +120,7 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_sendframe(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -126,6 +144,7 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_sendframe] sys_sendframe,
 };
 
 void

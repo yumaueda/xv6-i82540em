@@ -5,20 +5,6 @@
 #include "i82540em.h"
 
 
-uint32_t sendframe(struct net *inet, void *p_packet, uint32_t packet_size)
-{
-    if (packet_size > ETHER_DATA_MAX_LEN || !p_packet)
-        return 0;
-
-    if (packet_size < ETHER_DATA_MIN_LEN)
-        return 0;
-
-    uint32_t (*send)(struct net *inet, void *p_packet, uint32_t packet_size) = inet->send;
-    send(inet, p_packet, packet_size);
-    return packet_size;
-}
-
-
 uint32_t gen_frame(void *dst, struct ether_hdr *ehdr, void *p_data, uint32_t data_len)
 {
     if (data_len > ETHER_DATA_MAX_LEN || !p_data)
@@ -43,4 +29,18 @@ uint32_t gen_frame(void *dst, struct ether_hdr *ehdr, void *p_data, uint32_t dat
         memmove(dst, (void *)frame, ETHER_HDR_LEN + data_len);
         return (uint32_t)(ETHER_HDR_LEN + data_len);
     }
+}
+
+
+uint32_t sendframe(struct net *inet, void *p_packet, uint32_t packet_len)
+{
+    if (packet_len > ETHER_DATA_MAX_LEN || !p_packet)
+        return 0;
+
+    if (packet_len < ETHER_DATA_MIN_LEN)
+        return 0;
+
+    uint32_t (*send)(struct net *inet, void *p_packet, uint32_t packet_len) = inet->send;
+    send(inet, p_packet, packet_len);
+    return packet_len;
 }

@@ -183,18 +183,20 @@ int i82540em_init(struct pci_func *func)
 
 
     // send a test frame
-    struct net *n_inet = get_inet();
-
+    struct net *n_inet;
     struct ether_hdr ehdr;
+    uint32_t frame_len;
+    char *data = "\x48\x65\x6C\x6C\x6F\x2C\x20\x57\x6F\x72\x6C\x64\x21"; // Hello, World!
+
+    n_inet = get_inet();
+
     memmove(ehdr.src, n_inet->addr, ETHER_ADDR_LEN);
     memmove(ehdr.dst, ETHER_ADDR_BROADCAST, ETHER_ADDR_LEN);
     ehdr.type = ETHER_TYPE_ARP;
 
-    char *data = "\x48\x65\x6C\x6C\x6F\x2C\x20\x57\x6F\x72\x6C\x64\x21"; // Hello, World!
-
     void *frame = kalloc();
+    frame_len = gen_frame(frame, &ehdr, data, 13);
 
-    uint32_t frame_len = gen_frame(frame, &ehdr, data, 13);
     sendframe(n_inet, frame, frame_len);
 
     return 0;

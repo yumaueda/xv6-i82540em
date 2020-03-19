@@ -26,8 +26,8 @@ void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
 
 // ether.c
-uint32_t        gen_frame(void *dst, struct ether_hdr *ehdr, void *data, uint32_t data_len);
-uint32_t        sendframe(struct net *inet, void *p_packet, uint32_t packet_size);
+uint32_t        gen_frame(void *dst, struct ether_hdr *ehdr, void *p_data, uint32_t data_len);
+uint32_t        sendframe(struct net *inet, void *p_packet, uint32_t packet_len);
 
 // exec.c
 int             exec(char*, char**);
@@ -169,9 +169,11 @@ char*           strncpy(char*, const char*, int);
 
 // syscall.c
 int             argint(int, int*);
+int             arguint(int, uint*);
 int             argptr(int, char**, int);
 int             argstr(int, char**);
 int             fetchint(uint, int*);
+int             fetchuint(uint, uint*);
 int             fetchstr(uint, char**);
 void            syscall(void);
 
