@@ -11,9 +11,6 @@
 #include "proc.h"
 
 
-static struct i82540em *p_nic_i82540em;
-
-
 static uint32_t read_reg(struct i82540em *nic, uint16_t offset)
 {
     return *(volatile uint32_t *)(nic->mmio_base_addr + offset);
@@ -175,28 +172,30 @@ int i82540em_init(struct pci_func *func)
     rx_init(nic_i82540em);
     tx_init(nic_i82540em);
 
+    // register inet
     struct net *inet = (struct net *)kalloc();
     memset(inet, 0, sizeof(struct net));
     inet->nic = nic_i82540em;
     memmove(inet->addr, nic_i82540em->addr, ETHER_ADDR_LEN);
     inet->send = tx;
-
     nic_i82540em->inet = inet;
-    p_nic_i82540em = nic_i82540em;
-
     register_inet(inet);
 
-    struct net *n_inet = get_inet();
-    struct ether_hdr hdr;
 
-    uint8_t dst[ETHER_ADDR_LEN] = ETHER_ADDR_BROADCAST;
-    memmove(hdr.src, n_inet->addr, ETHER_ADDR_LEN);
-    memmove(hdr.dst, dst, ETHER_ADDR_LEN);
-    hdr.type = ETHER_TYPE_EXPERIMENTAL;
-    void *hwframe = kalloc();
-    char *hw = "\x48\x65\x6C\x6C\x6F\x2C\x20\x57\x6F\x72\x6C\x64\x21";
-    memmove(hwframe, (void *)hw, 13);
-    uint32_t f_size = gen_frame(&hdr, hwframe, 13);
-    tx(n_inet, hwframe, f_size);
+    // send a test frame
+    struct net *n_inet = get_inet();
+
+    struct ether_hdr ehdr;
+    memmove(ehdr.src, n_inet->addr, ETHER_ADDR_LEN);
+    memmove(ehdr.dst, ETHER_ADDR_BROADCAST, ETHER_ADDR_LEN);
+    ehdr.type = ETHER_TYPE_ARP;
+
+    char *data = "\x48\x65\x6C\x6C\x6F\x2C\x20\x57\x6F\x72\x6C\x64\x21"; // Hello, World!
+
+    void *frame = kalloc();
+
+    uint32_t frame_len = gen_frame(frame, &ehdr, data, 13);
+    sendframe(n_inet, frame, frame_len);
+
     return 0;
 }

@@ -2,7 +2,6 @@
 #define __NET__ 1
 
 
-#include "types.h"
 #include "ether.h"
 
 
