@@ -71,6 +71,13 @@ static void tx_init(struct i82540em *nic)
     // set TX head and tail
     write_reg(nic, TDH_8254X, 0);
     write_reg(nic, TDT_8254X, TX_RING_SIZE-1);
+    /*
+    // disable TXQE
+    write_reg(nic, IMC_8254X,
+        IMC_TXQE |
+        0
+    );
+    */
     // set TX control regsiter
     write_reg(nic, TCTL_8254X,
         TCTL_EN  |
@@ -185,6 +192,7 @@ int i82540em_init(struct pci_func *func)
     // send a test frame
     struct net *n_inet;
     struct ether_hdr ehdr;
+    void *frame;
     uint32_t frame_len;
     char *data = "\x48\x65\x6C\x6C\x6F\x2C\x20\x57\x6F\x72\x6C\x64\x21"; // Hello, World!
 
@@ -194,10 +202,11 @@ int i82540em_init(struct pci_func *func)
     memmove(ehdr.dst, ETHER_ADDR_BROADCAST, ETHER_ADDR_LEN);
     ehdr.type = ETHER_TYPE_ARP;
 
-    void *frame = kalloc();
+    frame = kalloc();
     frame_len = gen_frame(frame, &ehdr, data, 13);
 
     sendframe(n_inet, frame, frame_len);
+    kfree(frame);
 
     return 0;
 }

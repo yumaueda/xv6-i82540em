@@ -170,10 +170,12 @@ char*           strncpy(char*, const char*, int);
 // syscall.c
 int             argint(int, int*);
 int             arguint(int, uint*);
+int             argushort(int, ushort*);
 int             argptr(int, char**, int);
 int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchuint(uint, uint*);
+int             fetchushort(uint, ushort*);
 int             fetchstr(uint, char**);
 void            syscall(void);
 

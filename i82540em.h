@@ -37,11 +37,14 @@
 #define EERD_START      0x1
 #define EERD_DONE       0x10
 
-//-----------
-// ICR / IMS
-//-----------
-#define IMS_RXT0        0x80
+//-----------------
+// ICR / IMS / IMC
+//-----------------
+#define ICR_TXQE        0x2
+#define IMS_TXQE        ICR_TXQE
+#define IMC_TXQE        ICR_TXQE
 #define ICR_RXT0        0x80
+#define IMS_RXT0        ICR_RXT0
 
 //------
 // RCTL

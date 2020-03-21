@@ -181,6 +181,7 @@ UPROGS=\
 	_ls\
 	_mkdir\
 	_rm\
+	_sendframetest\
 	_sh\
 	_stressfs\
 	_usertests\

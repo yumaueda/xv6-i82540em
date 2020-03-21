@@ -23,6 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int sendframe(uint8_t *dst_addr, void *p_data, uint32_t data_len, uint16_t data_type);
 
 // ulib.c
 int stat(const char*, struct stat*);
