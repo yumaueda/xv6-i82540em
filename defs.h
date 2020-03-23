@@ -13,6 +13,10 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+
+// arp.c
+int             arpinit(void);
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
@@ -105,6 +109,8 @@ void            mpinit(void);
 // net.c
 struct net*     get_inet(void);
 void            register_inet(struct net *inet);
+int             set_ipv4_addr(uint32_t ipv4_addr);
+int             netinit(void);
 
 // pci.c
 void            pciinit(void);

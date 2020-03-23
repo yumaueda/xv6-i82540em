@@ -1,4 +1,5 @@
 OBJS = \
+	arp.o\
 	bio.o\
 	console.o\
 	ether.o\

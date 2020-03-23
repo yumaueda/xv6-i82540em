@@ -26,3 +26,20 @@ void register_inet(struct net *inet)
 
     p_inet = inet;
 }
+
+
+int set_ipv4_addr(uint32_t ipv4_addr)
+{
+    // TODO: send probe before assigning an IPv4 address.
+    p_inet->ipv4_addr = ipv4_addr;
+    return 0;
+}
+
+
+int netinit(void)
+{
+    uint32_t ipv4_addr = 0x1000020f;
+    set_ipv4_addr(ipv4_addr);
+    arpinit();
+    return 0;
+}
