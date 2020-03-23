@@ -38,7 +38,7 @@ int set_ipv4_addr(uint32_t ipv4_addr)
 
 int netinit(void)
 {
-    uint32_t ipv4_addr = 0x1000020f;
+    uint32_t ipv4_addr = 0x0f02000a;
     set_ipv4_addr(ipv4_addr);
     arpinit();
     return 0;

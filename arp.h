@@ -11,7 +11,7 @@
 #define ATE_MAX_NUM      0x100
 
 
-struct arp_frame {
+struct __attribute__((__packed__)) arp_frame {
     uint16_t htype;
     uint16_t ptype;
     uint8_t  hlen;

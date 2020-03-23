@@ -19,7 +19,7 @@ static inline void arp_ether_ipv4_set_len(struct arp_frame *arp)
 }
 
 
-void gen_ether_arp_probe(struct net *inet, struct arp_frame *arp)
+void gen_ether_garp(struct net *inet, struct arp_frame *arp)
 {
     arp_ether_ipv4_set_type(arp);
     arp_ether_ipv4_set_len(arp);
@@ -46,7 +46,7 @@ int arpinit(void)
     ehdr.type = ETHER_TYPE_ARP;
 
     memset(&arp, 0, sizeof(struct arp_frame));
-    gen_ether_arp_probe(inet, &arp);
+    gen_ether_garp(inet, &arp);
 
     frame = kalloc();
     frame_len = gen_frame(frame, &ehdr, &arp, sizeof(arp));
